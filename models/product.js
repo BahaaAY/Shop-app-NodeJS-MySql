@@ -1,31 +1,8 @@
-const fs = require('fs');
-const path = require('path');
+const db = require("./../util/database.js");
 
-const p = path.join(
-  path.dirname(process.mainModule.filename),
-  'data',
-  'products.json'
-);
-
-const getProductsFromFile = cb => {
-  fs.readFile(p, (err, fileContent) => {
-    if (err) {
-      cb([]);
-    } else {
-      cb(JSON.parse(fileContent));
-    }
-  });
-};
 
 module.exports = class Product {
   constructor(id,title, imageUrl, description, price) {
-    if(id)
-    {
-      this.id =id;
-    }else
-    {
-      this.id = Math.floor(Math.random()*20000000000);
-    }
     this.title = title;
     this.imageUrl = imageUrl;
     this.description = description;
@@ -33,72 +10,22 @@ module.exports = class Product {
   }
 
   save() {
-    getProductsFromFile(products => {
-      products.push(this);
-      fs.writeFile(p, JSON.stringify(products), err => {
-        console.log(err);
-      });
-    });
+    return db.execute('INSERT INTO products ( title,description, price,imageUrl) VALUES (?,?,?,?)',[this.title,this.description,this.price,this.imageUrl]);
   }
 
-  static fetchAll(cb) {
-    getProductsFromFile(cb);
+  static fetchAll() {
+    return db.execute("SELECT * FROM products");
   }
   static editProduct(editedProduct, successCB, errCB)
   {
-    this.fetchAll((products)=>{
-      let newProducts = [...products];
-      var productExists = false;
-      for(let i=0; i<newProducts.length;i++)
-      {
-        if(newProducts[i].id == editedProduct.id)
-        {
-          newProducts[i] = {...editedProduct};
-          productExists = true;
-          break;
-        }
-      }
-      if(productExists)
-      {
-        fs.writeFile(p, JSON.stringify(newProducts), err => {
-          console.log(err);
-        });
-        successCB();
-      }else
-      {
-        errCB('Product Not Found!');
-      }
-    });
-    
   }
   
-  static deleteProductByID(id, cb)
+  static deleteProductByID(id)
   {
-    this.fetchAll((products)=>{
-      let newProducts = [...products];
-      console.log('Products: ', newProducts);
-      let result = newProducts.filter((product) => product.id !=id);
-      console.log('Filtered Products: ', result);
-      fs.writeFile(p, JSON.stringify(result), err => {
-        console.log(err);
-      });
-      cb();
-
-    })
   }
 
-  static findProductByID(id, cb)
+  static findProductByID(id)
   {
-    getProductsFromFile((products)=>{
-      products.forEach(p => {
-        if(p.id == id)
-        {
-          cb(p);
-          return false; 
-        }
-        
-      });
-      
-    });
+    return db.execute('SELECT * FROM products WHERE products.id = ?' , [id]);
   }
 };

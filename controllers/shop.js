@@ -2,10 +2,9 @@ const Product = require('../models/product');
 const Cart = require('../models/cart');
 
 exports.getProducts = (req, res, next) => {
-  console.log("EGDF SDFSD");
-  Product.fetchAll().then(([rows, fieldData]) => {
+  Product.findAll().then(products=>{
     res.render('shop/product-list', {
-      prods: rows,
+      prods: products,
       pageTitle: 'All Products',
       path: '/products'
     });
@@ -14,23 +13,19 @@ exports.getProducts = (req, res, next) => {
 
 exports.getProduct = (req, res, next) => {
   const productID = req.params.productID;
-  Product.findProductByID(productID).then(([product,fieldData]) =>{
+  Product.findByPk(productID).then(product=>{
     res.render('shop/product-detail', {
-      pageTitle: product[0].title,
+      pageTitle: product.title,
       path: '/products',
-      product: product[0],
-
+      product: product,
     });
   });
-
-
 };
 
-
 exports.getIndex = (req, res, next) => {
-  Product.fetchAll().then(([rows, fieldData]) => {
+  Product.findAll().then(products=>{
     res.render('shop/index', {
-      prods: rows,
+      prods: products,
       pageTitle: 'Shop',
       path: '/'
     });

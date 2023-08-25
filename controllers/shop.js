@@ -89,11 +89,22 @@ exports.addToCart = (req, res, next) => {
 exports.deleteCartItem = (req, res, next) => {
 
   const productID = req.body.productID;
-  Cart.deleteProductByID(productID, () => {
-    res.redirect('/cart');
-  }, () => {
+  req.user.getCart().then(cart=>{
+    return cart.getProducts({where: {id: productID}});
+  }
 
-  })
+  ).then(products =>{
+    if(products.length>0)
+    {
+      return products[0].cartItem.destroy();
+    } else
+    {
+      console.log("Product Not Found!");
+      Promise.resolve();
+    }
+  }).then(()=>{
+    res.redirect('/cart');
+  }).catch(err =>{console.log("Error: ", err);});
 };
 
 exports.getOrders = (req, res, next) => {

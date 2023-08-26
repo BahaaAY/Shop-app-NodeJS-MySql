@@ -60,29 +60,28 @@ exports.addToCart = (req, res, next) => {
   console.log('Product Added: ', req.body.productID);
   var productID = req.body.productID;
   let fetchedCart;
-  var newQuantity=1;
+  var newQuantity = 1;
   req.user.getCart().then(cart => {
     fetchedCart = cart;
     //check if product already exists?
     return cart.getProducts({ where: { id: productID } });
   }).then(products => {
-    if(products.length>0) //product exists in cart
+    if (products.length > 0) //product exists in cart
     {
       // Increase existing product quantity
-      newQuantity = products[0].cartItem.quantity +1;
+      newQuantity = products[0].cartItem.quantity + 1;
 
     }
 
-    return Product.findByPk(productID);
+    return Product.findByPk(productID); // Get Product
 
 
-  }).then((product)=>{
+  }).then((product) => {
     // check if product is a valid product
-    if(product)
-    {
-      return fetchedCart.addProduct(product, {through : {quantity: newQuantity}});
+    if (product) {
+      return fetchedCart.addProduct(product, { through: { quantity: newQuantity } });
     }
-  }).then(()=>{
+  }).then(() => {
     res.redirect('/cart');
   }).catch(err => {
     console.log("Error Getting Cart!: ", err);
@@ -92,22 +91,20 @@ exports.addToCart = (req, res, next) => {
 exports.deleteCartItem = (req, res, next) => {
 
   const productID = req.body.productID;
-  req.user.getCart().then(cart=>{
-    return cart.getProducts({where: {id: productID}});
+  req.user.getCart().then(cart => {
+    return cart.getProducts({ where: { id: productID } });  
   }
 
-  ).then(products =>{
-    if(products.length>0)
-    {
-      return products[0].cartItem.destroy();
-    } else
-    {
+  ).then(products => {
+    if (products.length > 0) { // Check if Product Exists in Cart
+      return products[0].cartItem.destroy();  // Delete Cart Item
+    } else {
       console.log("Product Not Found!");
-      Promise.resolve();
+      Promise.resolve();  
     }
-  }).then(()=>{
+  }).then(() => {
     res.redirect('/cart');
-  }).catch(err =>{console.log("Error: ", err);});
+  }).catch(err => { console.log("Error: ", err); });
 };
 
 exports.getOrders = (req, res, next) => {
@@ -117,33 +114,38 @@ exports.getOrders = (req, res, next) => {
   });
 };
 
-exports.postOrder =(req,res,next)=>{
-  let user = req.user;
-  let fetchedCart;
+exports.postOrder = (req, res, next) => { 
+  let user = req.user;  // Get User
+  let fetchedCart;  
   let cartProducts;
-  user.getCart().then(
-    cart=>{
-      fetchedCart= cart;
-      return fetchedCart.getProducts();
+  user.getCart().then(  // Get User Cart
+    cart => {
+      fetchedCart = cart;
+      return fetchedCart.getProducts(); // Get Cart Products
     }
   ).then(
-    products=>{
-      cartProducts = products;
-      return user.createOrder({total: calculateTotal(products)});
+    products => {
+      cartProducts = products; 
+      return user.createOrder({ total: calculateTotal(products) }); // Create Order
     }
   ).then(
-    order =>{
-      
-      return order.addProducts(cartProducts.map(product=>{
-        product.orderItem = {quantity: product.cartItem.quantity};
+    order => {
+
+      return order.addProducts(cartProducts.map(product => {  // Add Products to Order
+        product.orderItem = { quantity: product.cartItem.quantity };  // Add Quantity to OrderItem
         return product;
       }));
     }
 
-  ).catch(err =>{console.log("Error: ", err);});
+  ).then(() => {
+    return fetchedCart.setProducts(null); // Empty Cart
+  }).then(()=>{ 
+    console.log("Order Created!"); 
+    res.redirect('/orders');  // Redirect to Orders Page
+  }).catch(err => { console.log("Error: ", err); });  
 }
 
-exports.getCheckout = (req, res, next) => {
+exports.getCheckout = (req, res, next) => { 
   res.render('shop/checkout', {
     path: '/checkout',
     pageTitle: 'Checkout'

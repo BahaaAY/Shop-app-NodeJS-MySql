@@ -51,7 +51,7 @@ User.hasMany(Order); // One to Many Relationship between User and Orders
 
 let fetchedUser;
 sequelize.sync(
-    {force: true}
+    // {force: true}
 ).then(result => {
     //console.log(result);
     return User.findByPk(1);

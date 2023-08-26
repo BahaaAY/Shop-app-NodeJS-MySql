@@ -1,3 +1,5 @@
+const calculateTotal = require('../util/functions').calculateTotal;
+
 const Product = require('../models/product');
 const Cart = require('../models/cart');
 
@@ -36,11 +38,12 @@ exports.getCart = (req, res, next) => {
   req.user.getCart().then(cart => {
     console.log("UserCart: ", cart);
     return cart.getProducts().then(cartProducts => {
+      const total = calculateTotal(cartProducts);
       res.render('shop/cart', {
         path: '/cart',
         pageTitle: 'Your Cart',
         cartProducts: cartProducts,
-        cartTotal: 1,
+        cartTotal: total,
 
       });
 
@@ -113,6 +116,32 @@ exports.getOrders = (req, res, next) => {
     pageTitle: 'Your Orders'
   });
 };
+
+exports.postOrder =(req,res,next)=>{
+  let user = req.user;
+  let fetchedCart;
+  let cartProducts;
+  user.getCart().then(
+    cart=>{
+      fetchedCart= cart;
+      return fetchedCart.getProducts();
+    }
+  ).then(
+    products=>{
+      cartProducts = products;
+      return user.createOrder({total: calculateTotal(products)});
+    }
+  ).then(
+    order =>{
+      
+      return order.addProducts(cartProducts.map(product=>{
+        product.orderItem = {quantity: product.cartItem.quantity};
+        return product;
+      }));
+    }
+
+  ).catch(err =>{console.log("Error: ", err);});
+}
 
 exports.getCheckout = (req, res, next) => {
   res.render('shop/checkout', {

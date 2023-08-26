@@ -9,6 +9,8 @@ const Product = require('./models/product');
 const User = require('./models/user');
 const Cart = require('./models/cart');
 const CartItem = require('./models/cart-item');
+const Order = require('./models/order');
+const OrderItem = require('./models/order-item');
 
 
 const app = express();
@@ -38,15 +40,18 @@ app.use(errorController.get404);
 
 User.hasMany(Product, { constraints: true, onDelete: 'CASCADE' });
 
-User.hasOne(Cart, { constraints: true, onDelete: 'CASCADE' });
-Cart.belongsTo(User, { constraints: true, onDelete: 'CASCADE' })
+User.hasOne(Cart, { constraints: true, onDelete: 'CASCADE' });      // One to One Relationship between User and Cart
+Cart.belongsTo(User, { constraints: true, onDelete: 'CASCADE' })        // One to One Relationship between User and Cart
 
-Product.belongsToMany(Cart, { through: CartItem });
-Cart.belongsToMany(Product, { through: CartItem });
+Product.belongsToMany(Cart, { through: CartItem }); // Many to Many Relationship between Products and Carts
+Cart.belongsToMany(Product, { through: CartItem }); // Many to Many Relationship between Carts and Products
+
+Order.belongsToMany(Product, { through: OrderItem }); // Many to Many Relationship between Orders and Products
+User.hasMany(Order); // One to Many Relationship between User and Orders
 
 let fetchedUser;
 sequelize.sync(
-    // {force: true}
+    {force: true}
 ).then(result => {
     //console.log(result);
     return User.findByPk(1);
